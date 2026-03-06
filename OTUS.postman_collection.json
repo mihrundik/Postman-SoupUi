@@ -1,0 +1,1749 @@
+{
+  "info": {
+    "_postman_id": "a2780993-2b9f-4dba-9235-7adaab59a2c5",
+    "name": "OTUS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46384517"
+  },
+  "item": [
+    {
+      "name": "1. Аутоидентификация",
+      "item": [
+        {
+          "name": "Позитивные",
+          "item": [
+            {
+              "name": "1 Регистрация с валидными email и паролем",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// случайные значения и сохраняем их в переменные",
+                      "const randomName = pm.variables.replaceIn(\"{{$randomFullName}}\");",
+                      "const randomEmail = pm.variables.replaceIn(\"{{$randomEmail}}\");",
+                      "const randomPassword = pm.variables.replaceIn(\"{{$randomPassword}}\");",
+                      "",
+                      "// сохраняем эти конкретные значения в переменные окружения",
+                      "pm.environment.set(\"savedName\", randomName);",
+                      "pm.environment.set(\"savedEmail\", randomEmail);",
+                      "pm.environment.set(\"savedPassword\", randomPassword);",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{savedName}}\",\n  \"email\": \"{{savedEmail}}\",\n  \"password\": \"{{savedPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/auth/register",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Авторизация с только что созданными учетными данными",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"Response body contains a valid JWT token\", function () {",
+                      "    const responseData = pm.response.json();",
+                      "    // проверяем существование поля token",
+                      "    if (responseData && responseData.token) {",
+                      "        pm.environment.set(\"jwt_token\", responseData.token); // Сохранение токена в переменную среды",
+                      "        console.log(`JWT Token saved to environment variable 'jwt_token': ${responseData.token}`);",
+                      "}",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{savedName}}\",\n  \"password\": \"{{savedPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/auth/login",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3 Получение списка пользователей",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Статус ответа 200 OK\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponse = pm.response.json();",
+                      "",
+                      "// проверяем, что ответ — это массив",
+                      "pm.test(\"Ответ — это массив\", function () {",
+                      "      pm.expect(jsonResponse).to.be.an(\"array\");",
+                      "});",
+                      "",
+                      "// проверяем, что массив не пустой",
+                      "pm.test(\"Массив содержит хотя бы один элемент\", function () {",
+                      "      pm.expect(jsonResponse.length).to.be.at.least(1);",
+                      "});",
+                      "",
+                      "// получаем ID последнего элемента массива",
+                      "const firstItemId = jsonResponse[jsonResponse.length - 1].id;",
+                      "",
+                      "// сохраняем ID в переменную окружения",
+                      "pm.environment.set(\"anyItemId\", firstItemId);",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{URL}}/users",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "users"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Негативные",
+          "item": [
+            {
+              "name": "1 Регистрация с существующим email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"Response body contains error fields\", function () {",
+                      "    var responseData = pm.response.json();",
+                      "    pm.expect(responseData.error).to.eql(\"Authentication failed\");",
+                      "    pm.expect(responseData.message).to.eql(\"Request processing failed: java.lang.IllegalArgumentException: ???????????? ? ????? email ??? ??????????\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{$randomFullName}}\",\n  \"email\": \"{{savedEmail}}\",\n  \"password\": \"{{$randomPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/auth/register",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Регистрация с некорректным email",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// случайные значения и сохраняем их в переменные",
+                      "const randomName2 = pm.variables.replaceIn(\"{{$randomFullName}}\");",
+                      "const randomPassword2 = pm.variables.replaceIn(\"{{$randomPassword}}\");",
+                      "",
+                      "// сохраняем эти конкретные значения в переменные окружения",
+                      "pm.environment.set(\"savedName2\", randomName2);",
+                      "pm.environment.set(\"savedPassword2\", randomPassword2);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{savedName2}}\",\n  \"email\": \"{{$randomAbbreviation}}\",\n  \"password\": \"{{savedPassword2}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/auth/register",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3 Авторизация с неверным паролем",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{savedName}}\",\n  \"password\": \"{{$randomPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/auth/login",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4 Авторизация с несуществующим именем пользователя",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{$randomCity}}\",\n  \"password\": \"{{savedPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/auth/login",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Списки желаний",
+      "item": [
+        {
+          "name": "Позитивные",
+          "item": [
+            {
+              "name": "1 Создание нового списка желаний",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// случайные значения и сохраняем их в переменные",
+                      "const randomTitle = pm.variables.replaceIn(\"{{$randomAdjective}}\");",
+                      "const randomDescription = pm.variables.replaceIn(\"{{$randomWords}}\");",
+                      "",
+                      "// сохраняем эти конкретные значения в переменные окружения",
+                      "pm.environment.set(\"savedTitle\", randomTitle);",
+                      "pm.environment.set(\"savedDescription\", randomDescription);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "const responseBody = pm.response.json();",
+                      "",
+                      "// сохраняем id в переменную",
+                      "pm.environment.set(\"itemId\", responseBody.id);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "followRedirects": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"{{savedTitle}}\",\n  \"description\": \"{{savedDescription}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/wishlists",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Получение своего списка по ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Статус ответа 200 OK\", function () {",
+                      "      pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// проверка соответствия ID",
+                      "pm.test(\"ID объекта совпадает с сохранённым\", function () {",
+                      "      const savedItemId = pm.environment.get(\"itemId\"); // получаем сохранённое значение",
+                      "      const receivedId = pm.response.json().id; // получаем ID из ответа",
+                      "      ",
+                      "      pm.expect(receivedId).to.eql(savedItemId); // проверяем равенство",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/wishlists/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3 Получение всех списков пользователя",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Статус ответа 200 OK\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponseArray = pm.response.json();",
+                      "",
+                      "// получаем сохранённый ID подарка",
+                      "const savedItemId = pm.environment.get(\"itemId\");",
+                      "",
+                      "// проверяем, что переменная окружения установлена",
+                      "pm.test(\"Переменная окружения 'itemId' установлена\", function () {",
+                      "      pm.expect(savedItemId).to.be.a(\"string\").and.not.empty;",
+                      "});",
+                      "",
+                      "// ищем объект с нужным ID в массиве",
+                      "const targetObject = jsonResponseArray.find(item => item.id === savedItemId);",
+                      "pm.test(\"Объект с ID=\" + savedItemId + \" найден в ответе\", function () {",
+                      "      pm.expect(targetObject).to.exist;",
+                      "});",
+                      "",
+                      "// проверяем наличие массива подарков внутри wishList",
+                      "const giftsInWishList = targetObject?.wishList?.gifts ?? [];",
+                      "pm.test(\"Внутри объекта есть массив подарков\", function () {",
+                      "      pm.expect(giftsInWishList).to.be.an(\"array\");",
+                      "});",
+                      "",
+                      "// ищем нужный подарок среди подарков wishList",
+                      "const targetGift = giftsInWishList.find(gift => gift.id === savedItemId);",
+                      "",
+                      "",
+                      "",
+                      "",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/wishlists",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4 Получение публичных списков другого пользователя по ИД",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Статус ответа 200 OK\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "",
+                      "",
+                      "",
+                      "",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/wishlists/user/{{anyItemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists",
+                    "user",
+                    "{{anyItemId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "5 Обновление названия списка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 200\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponse = pm.response.json();",
+                      "",
+                      "// проверяем, что title равен \"new_title\"",
+                      "pm.test(\"Title равен 'new_title'\", function () {",
+                      "      pm.expect(jsonResponse.title).to.eql(\"new_title\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"new_title\",\n  \"description\": \"{{savedDescription}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/wishlists/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Негативные",
+          "item": [
+            {
+              "name": "1 Создание списка без названия",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// случайные значения и сохраняем их в переменные",
+                      "const randomTitle = pm.variables.replaceIn(\"{{$randomAdjective}}\");",
+                      "const randomDescription = pm.variables.replaceIn(\"{{$randomWords}}\");",
+                      "",
+                      "// сохраняем эти конкретные значения в переменные окружения",
+                      "pm.environment.set(\"savedTitle\", randomTitle);",
+                      "pm.environment.set(\"savedDescription\", randomDescription);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "followRedirects": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"\",\n  \"description\": \"{{savedDescription}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/wishlists",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Получение несуществующего списка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Статус ответа 401 OK\", function () {",
+                      "      pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"Response body contains error fields\", function () {",
+                      "    var responseData = pm.response.json();",
+                      "    pm.expect(responseData.error).to.eql(\"Authentication failed\");",
+                      "    pm.expect(responseData.message).to.eql(\"Request processing failed: jakarta.persistence.EntityNotFoundException: ?????? ??????? ?? ??????\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/wishlists/{{$randomUUID}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists",
+                    "{{$randomUUID}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Подарки",
+      "item": [
+        {
+          "name": "Позитивные",
+          "item": [
+            {
+              "name": "1 Создание подарка с корректными данными",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 200\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponse = pm.response.json();",
+                      "const giftResponse = jsonResponse.wishList.gifts[0];",
+                      "",
+                      "// сохраняем каждое поле подарка отдельно в переменные окружения",
+                      "pm.environment.set(\"id\", giftResponse.id);",
+                      "pm.environment.set(\"name\", giftResponse.name);",
+                      "pm.environment.set(\"description\", giftResponse.description);",
+                      "pm.environment.set(\"imageUrl\", giftResponse.imageUrl);",
+                      "pm.environment.set(\"storeUrl\", giftResponse.storeUrl);",
+                      "pm.environment.set(\"price\", giftResponse.price);",
+                      "pm.environment.set(\"reserved\", giftResponse.reserved);",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"{{$randomColor}}\",\n  \"description\": \"{{$randomAbbreviation}}\",\n  \"imageUrl\": \"{{$randomAvatarImage}}\",\n  \"storeUrl\": \"{{$randomUrl}}\",\n  \"price\": {{$randomInt}},\n  \"reserved\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/gifts/wishlist/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "wishlist",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Получение существующего подарка по ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponse = pm.response.json();",
+                      "",
+                      "// проверяем структуру ответа",
+                      "if (!jsonResponse || !jsonResponse.wishList || !Array.isArray(jsonResponse.wishList.gifts) || !jsonResponse.wishList.gifts.length) {",
+                      "      throw new Error(\"Некорректная структура ответа или отсутствие подарка!\");",
+                      "}",
+                      "",
+                      "const currentGift = jsonResponse.wishList.gifts[0];",
+                      "",
+                      "// получаем предыдущие данные из переменных окружения",
+                      "const prevID = pm.environment.get(\"id\");",
+                      "const prevName = pm.environment.get(\"name\");",
+                      "const prevDescription = pm.environment.get(\"description\");",
+                      "const prevImageUrl = pm.environment.get(\"imageUrl\");",
+                      "const prevStoreUrl = pm.environment.get(\"storeUrl\");",
+                      "const prevPrice = Number(pm.environment.get(\"price\")); ",
+                      "const prevReserved = Boolean(pm.environment.get(\"reserved\")); ",
+                      "",
+                      "// сравнение полученных данных с сохраненными ранее",
+                      "pm.test(\"ID совпадает с сохранённым\", function () {",
+                      "      pm.expect(currentGift.id).to.eql(prevID);",
+                      "});",
+                      "",
+                      "pm.test(\"Название совпадает с сохранённым\", function () {",
+                      "      pm.expect(currentGift.name).to.eql(prevName);",
+                      "});",
+                      "",
+                      "pm.test(\"Описание совпадает с сохранённым\", function () {",
+                      "      pm.expect(currentGift.description).to.eql(prevDescription);",
+                      "});",
+                      "",
+                      "pm.test(\"Ссылка на картинку совпадает с сохранённой\", function () {",
+                      "      pm.expect(currentGift.imageUrl).to.eql(prevImageUrl);",
+                      "});",
+                      "",
+                      "pm.test(\"Ссылка магазина совпадает с сохранённой\", function () {",
+                      "      pm.expect(currentGift.storeUrl).to.eql(prevStoreUrl);",
+                      "});",
+                      "",
+                      "pm.test(\"Цена совпадает с сохранённой\", function () {",
+                      "      pm.expect(Number(currentGift.price)).to.eql(prevPrice);",
+                      "});",
+                      "",
+                      "pm.test(\"Статус reserved совпадает с сохранённым\", function () {",
+                      "      pm.expect(Boolean(currentGift.reserved)).to.eql(prevReserved);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/gifts/{{id}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3 Получение списка подарков в Wishlist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponse = pm.response.json();",
+                      "",
+                      "// получаем сохранённое ранее значение ID подарка",
+                      "const expectedGiftID = pm.environment.get(\"id\");",
+                      "",
+                      "// проверяем, что ожидаемое значение ID действительно установлено",
+                      "pm.test(\"Переменная окружения 'id' установлена\", function () {",
+                      "      pm.expect(expectedGiftID).to.be.a(\"string\").and.not.empty;",
+                      "});",
+                      "",
+                      "// проверяем, что в ответе есть хотя бы один подарок",
+                      "pm.test(\"Есть хотя бы один подарок в ответе\", function () {",
+                      "      pm.expect(Array.isArray(jsonResponse)).to.be.true;",
+                      "      pm.expect(jsonResponse.length).to.be.above(0);",
+                      "});",
+                      "",
+                      "// ищем подарок с соответствующим ID ",
+                      "const rootLevelGift = jsonResponse.find(item => item.id === expectedGiftID);",
+                      "",
+                      "// проверяем, что у найденного подарка есть wishList и gifts",
+                      "pm.test(\"У подарка есть wishList и gifts\", function () {",
+                      "      pm.expect(rootLevelGift.wishList).to.exist.and.to.have.property(\"gifts\");",
+                      "      pm.expect(Array.isArray(rootLevelGift.wishList.gifts)).to.be.true;",
+                      "});",
+                      "",
+                      "// ищем подарок с соответствующим ID среди вложенных подарков wishList.gifts",
+                      "const nestedGift = rootLevelGift.wishList.gifts.find(item => item.id === expectedGiftID);",
+                      "",
+                      "// проверяем, что нашли подарок среди вложенных подарков",
+                      "pm.test(\"Подарок с ID=\" + expectedGiftID + \" найден среди вложенных подарков wishList.gifts\", function () {",
+                      "      pm.expect(nestedGift).to.exist;",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/gifts/wishlist/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "wishlist",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4 Обновление описания подарка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 200\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      "",
+                      "const jsonResponse = pm.response.json();",
+                      "const giftResponse = jsonResponse.wishList.gifts[0];",
+                      "",
+                      "// сохраняем каждое поле подарка отдельно в переменные окружения",
+                      "pm.environment.set(\"id\", giftResponse.id);",
+                      "pm.environment.set(\"name\", giftResponse.name);",
+                      "pm.environment.set(\"description\", giftResponse.description);",
+                      "pm.environment.set(\"imageUrl\", giftResponse.imageUrl);",
+                      "pm.environment.set(\"storeUrl\", giftResponse.storeUrl);",
+                      "pm.environment.set(\"price\", giftResponse.price);",
+                      "pm.environment.set(\"reserved\", giftResponse.reserved);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"{{$randomColor}}\",\n  \"description\": \"{{$randomAbbreviation}}\",\n  \"imageUrl\": \"{{$randomAvatarImage}}\",\n  \"storeUrl\": \"{{$randomUrl}}\",\n  \"price\": {{$randomInt}},\n  \"reserved\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/gifts/{{id}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "5 Обновление резервирования подарка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 200\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(200);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/gifts/{{id}}/reserve",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{id}}",
+                    "reserve"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Негативные",
+          "item": [
+            {
+              "name": "1 Создание подарка без названия",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 403\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(403);",
+                      "});",
+                      "",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"\",\n  \"description\": \"{{$randomAbbreviation}}\",\n  \"imageUrl\": \"{{$randomAvatarImage}}\",\n  \"storeUrl\": \"{{$randomUrl}}\",\n  \"price\": {{$randomInt}},\n  \"reserved\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/gifts/wishlist/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "wishlist",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Создание подарка с отрицательной ценой",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 403\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(403);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"{{$randomColor}}\",\n  \"description\": \"{{$randomAbbreviation}}\",\n  \"imageUrl\": \"{{$randomAvatarImage}}\",\n  \"storeUrl\": \"{{$randomUrl}}\",\n  \"price\": -500,\n  \"reserved\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/gifts/wishlist/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "wishlist",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3 Получение несуществующего подарка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.expect(pm.response.code).to.equal(401);",
+                      "});",
+                      "",
+                      "pm.test(\"Response body contains error fields\", function () {",
+                      "    var responseData = pm.response.json();",
+                      "    pm.expect(responseData.error).to.eql(\"Authentication failed\");",
+                      "    pm.expect(responseData.message).to.eql(\"Request processing failed: jakarta.persistence.EntityNotFoundException: ??????? ?? ??????\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/gifts/{{$randomUUID}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{$randomUUID}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4 Некорректное обновление описания подарка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// проверка статуса ответа",
+                      "pm.test(\"Status code is 403\", function () {",
+                      "      pm.expect(pm.response.code).to.equal(403);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id\": \"{{id}}\",\n  \"name\": \"{{name}}\",\n  \"description\": {{$randomInt}},\n  \"imageUrl\": {{$randomInt}},\n  \"storeUrl\": {{$randomInt}},\n  \"price\": {{$randomInt}},\n  \"reserved\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/gifts/{{id}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{id}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Проверки удаления",
+      "item": [
+        {
+          "name": "Позитивные",
+          "item": [
+            {
+              "name": "1 Удаление подарка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/gifts/{{id}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Удаление списка желаний",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{URL}}/wishlists/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Негативные",
+          "item": [
+            {
+              "name": "1 Повторное удаление подарка",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"Response body contains error fields\", function () {",
+                      "    var responseData = pm.response.json();",
+                      "    pm.expect(responseData.error).to.eql(\"Authentication failed\");",
+                      "    pm.expect(responseData.message).to.eql(\"Request processing failed: jakarta.persistence.EntityNotFoundException: ??????? ?? ??????\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/gifts/{{id}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "gifts",
+                    "{{id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2 Повторное удаление списка желаний",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"Response body contains error fields\", function () {",
+                      "    var responseData = pm.response.json();",
+                      "    pm.expect(responseData.error).to.eql(\"Authentication failed\");",
+                      "    pm.expect(responseData.message).to.eql(\"Request processing failed: jakarta.persistence.EntityNotFoundException: ?????? ??????? ?? ??????\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{URL}}/wishlists/{{itemId}}",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "wishlists",
+                    "{{itemId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
